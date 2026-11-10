@@ -137,6 +137,16 @@ button:hover{
 </div>
 
 <div class="input-group">
+    <label>Time</label>
+    <input type="time" id="scrapTime">
+</div>
+
+<div class="input-group">
+    <label>MFP Number</label>
+    <input type="text" id="mfpNumber">
+</div>
+
+<div class="input-group">
 <label>Wire Length Produced (Meters)</label>
 <input type="number" id="length">
 </div>
@@ -169,6 +179,11 @@ button:hover{
 <div class="input-group">
 <label>PVC Stock Code</label>
 <input type="text" id="pvcCode">
+</div>
+
+<div class="input-group">
+    <label>Colour PVC Stock Code</label>
+    <input type="text" id="colorPvcCode">
 </div>
 
 <div class="input-group">
@@ -214,6 +229,16 @@ PVC Scrap / Loss
 </div>
 
 <div class="card">
+PVC Scrap (97%)
+<div class="value" id="purePvcScrap"></div>
+</div>
+
+<div class="card">
+Colour PVC Scrap (3%)
+<div class="value" id="colorPvcScrap"></div>
+</div>
+
+<div class="card">
 Wire Scrap
 <div class="value" id="wireScrap"></div>
 </div>
@@ -240,6 +265,8 @@ Material Conversion Efficiency
 <script>
 
 let calculatedPVCScrap = 0;
+let calculatedPurePVCScrap = 0;
+let calculatedColorPVCScrap = 0;
 let calculatedWireScrap = 0;
 
 function calculateScrap(){
@@ -264,10 +291,16 @@ function calculateScrap(){
     let expectedPVC = length * pvcPerMeter;
     let expectedColour = length * colourPerMeter;
 
-    calculatedPVCScrap = Math.max(
-        0,
-        (pvcUsed - expectedPVC) + plurgePVC
-    );
+   calculatedPVCScrap = Math.max(
+    0,
+    (pvcUsed - expectedPVC) + plurgePVC
+);
+
+calculatedPurePVCScrap =
+    calculatedPVCScrap * 0.97;
+
+calculatedColorPVCScrap =
+    calculatedPVCScrap * 0.03;
 
     calculatedWireScrap = Math.max(
         0,
@@ -306,6 +339,12 @@ function calculateScrap(){
     document.getElementById('scrapKg').innerHTML =
         calculatedPVCScrap.toFixed(3) + ' kg';
 
+    document.getElementById('purePvcScrap').innerHTML =
+    calculatedPurePVCScrap.toFixed(3) + ' kg';
+
+document.getElementById('colorPvcScrap').innerHTML =
+    calculatedColorPVCScrap.toFixed(3) + ' kg';
+
     document.getElementById('wireScrap').innerHTML =
         calculatedWireScrap.toFixed(3) + ' kg';
 
@@ -322,51 +361,102 @@ function calculateScrap(){
 function downloadScrapSheet(){
 
     let date =
-        document.getElementById('scrapDate').value;
+        document.getElementById("scrapDate").value;
+
+    let time =
+        document.getElementById("scrapTime").value;
+
+    let mfp =
+        document.getElementById("mfpNumber").value.trim();
 
     let pvcCode =
-        document.getElementById('pvcCode').value.trim();
+        document.getElementById("pvcCode").value.trim();
+
+    let colorPvcCode =
+        document.getElementById("colorPvcCode").value.trim();
 
     let wireCode =
-        document.getElementById('wireCode').value.trim();
+        document.getElementById("wireCode").value.trim();
 
     if(!date){
-        alert("Please select a date.");
+        alert("Please select a date");
+        return;
+    }
+
+    if(!time){
+        alert("Please select a time");
+        return;
+    }
+
+    if(!mfp){
+        alert("Please enter MFP Number");
         return;
     }
 
     if(!pvcCode){
-        alert("Please enter PVC Stock Code.");
+        alert("Please enter PVC Stock Code");
+        return;
+    }
+
+    if(!colorPvcCode){
+        alert("Please enter Colour PVC Stock Code");
         return;
     }
 
     if(!wireCode){
-        alert("Please enter Wire Stock Code.");
+        alert("Please enter Wire Stock Code");
         return;
     }
 
     const rows = [
-        ["DATE","MACHINE","STOCK CODE","QTY"],
+
         [
-            date,
-            "M70 Extrusion Machine",
-            pvcCode,
-            calculatedPVCScrap.toFixed(3)
+            "DATE",
+            "TIME",
+            "MACHINE",
+            "MFP",
+            "STOCK CODE",
+            "QTY"
         ],
+
         [
             date,
+            time,
             "M70 Extrusion Machine",
+            mfp,
+            pvcCode,
+            calculatedPurePVCScrap.toFixed(3)
+        ],
+
+        [
+            date,
+            time,
+            "M70 Extrusion Machine",
+            mfp,
+            colorPvcCode,
+            calculatedColorPVCScrap.toFixed(3)
+        ],
+
+        [
+            date,
+            time,
+            "M70 Extrusion Machine",
+            mfp,
             wireCode,
             calculatedWireScrap.toFixed(3)
         ]
+
     ];
 
     let csvContent =
-        rows.map(e => e.join(",")).join("\n");
+        rows.map(row => row.join(","))
+            .join("\\n");
 
     let blob = new Blob(
         [csvContent],
-        {type:"text/csv;charset=utf-8;"}
+        {
+            type:"text/csv;charset=utf-8;"
+        }
     );
 
     let link =
@@ -376,7 +466,9 @@ function downloadScrapSheet(){
         URL.createObjectURL(blob);
 
     link.download =
-        "M70_Scrap_Sheet_" + date + ".csv";
+        "M70_Scrap_Sheet_" +
+        date +
+        ".csv";
 
     document.body.appendChild(link);
 
