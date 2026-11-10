@@ -123,7 +123,11 @@ button:hover{
 <div class="container">
 
 <h1>WIRE EXTRUSION SCRAP CALCULATOR</h1>
-<center><img src="https://sealtron.co.za/wp-content/uploads/2024/07/Background-8.png" height=80px weight=100px></center>
+<center>
+    <img src="https://sealtron.co.za/wp-content/uploads/2024/07/Background-8.png"
+     height="80"
+     width="100">
+</center>
 <div class="info-box">
 <strong>Process Constant:</strong><br>
 25 kg PVC + 0.75 kg Colour = 5000 m Extruded Wire
@@ -261,6 +265,10 @@ Material Conversion Efficiency
 </div>
 
 </div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+<script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
 
 <script>
 
@@ -304,22 +312,28 @@ let purgePVC =
 let purgeColour =
     plurgePVC * COLOUR_RATIO;
 
-/* PVC Compound Weight Per Metre */
+/* Material ratios */
 
-const compoundPerMeter =
-    25.75 / 5000;
+const PVC_RATIO = 25 / 25.75;
+const COLOUR_RATIO = 0.75 / 25.75;
 
-/* Shine Wire Portion Inside Insulated Scrap */
+/*
+5000m contains:
+40kg shine wire
+25.75kg PVC compound
 
-let insulatedLength =
-    insulated / 0.008;
+Compound fraction of insulated wire
+*/
 
-/* PVC + Colour PVC Inside Insulated Scrap */
+const COMPOUND_RATIO =
+    25.75 / (25.75 + 40);
+
+/* PVC compound contained in insulated scrap */
 
 let compoundOnInsulated =
-    insulatedLength * compoundPerMeter;
+    insulated * COMPOUND_RATIO;
 
-/* Split Compound Into PVC And Colour */
+/* Split compound into PVC and colour PVC */
 
 let insulatedPVC =
     compoundOnInsulated * PVC_RATIO;
@@ -398,7 +412,14 @@ document.getElementById('colorPvcScrap').innerHTML =
 }
 
 async function downloadScrapSheet() {
-
+    if (
+    calculatedPurePVCScrap === 0 &&
+    calculatedColorPVCScrap === 0 &&
+    calculatedWireScrap === 0
+) {
+    alert("Please click Calculate Scrap first.");
+    return;
+}
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet("Scrap Sheet");
 
@@ -473,6 +494,9 @@ async function downloadScrapSheet() {
         `M70_Scrap_Sheet_${date}.xlsx`;
 
     link.click();
+    setTimeout(() => {
+    URL.revokeObjectURL(link.href);
+}, 1000);
 }
 
 </script>
