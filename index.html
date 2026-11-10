@@ -123,7 +123,7 @@ button:hover{
 <div class="container">
 
 <h1>WIRE EXTRUSION SCRAP CALCULATOR</h1>
-
+<center><img src="https://sealtron.co.za/wp-content/uploads/2024/07/Background-8.png" height=80px weight=100px></center>
 <div class="info-box">
 <strong>Process Constant:</strong><br>
 25 kg PVC + 0.75 kg Colour = 5000 m Extruded Wire
@@ -224,17 +224,17 @@ Plurge Out PVC / Lost PVC
 </div>
 
 <div class="card">
-PVC Scrap / Loss
+Total PVC Compound Scrap
 <div class="value" id="scrapKg"></div>
 </div>
 
 <div class="card">
-PVC Scrap (97%)
+PVC Scrap
 <div class="value" id="purePvcScrap"></div>
 </div>
 
 <div class="card">
-Colour PVC Scrap (3%)
+Colour PVC Scrap
 <div class="value" id="colorPvcScrap"></div>
 </div>
 
@@ -291,21 +291,60 @@ function calculateScrap(){
     let expectedPVC = length * pvcPerMeter;
     let expectedColour = length * colourPerMeter;
 
-   calculatedPVCScrap = Math.max(
-    0,
-    (pvcUsed - expectedPVC) + plurgePVC
-);
+   /* Material Ratios */
+
+const PVC_RATIO = 25 / 25.75;
+const COLOUR_RATIO = 0.75 / 25.75;
+
+/* Purge Scrap */
+
+let purgePVC =
+    plurgePVC * PVC_RATIO;
+
+let purgeColour =
+    plurgePVC * COLOUR_RATIO;
+
+/* PVC Compound Weight Per Metre */
+
+const compoundPerMeter =
+    25.75 / 5000;
+
+/* Shine Wire Portion Inside Insulated Scrap */
+
+let insulatedLength =
+    insulated / 0.008;
+
+/* PVC + Colour PVC Inside Insulated Scrap */
+
+let compoundOnInsulated =
+    insulatedLength * compoundPerMeter;
+
+/* Split Compound Into PVC And Colour */
+
+let insulatedPVC =
+    compoundOnInsulated * PVC_RATIO;
+
+let insulatedColour =
+    compoundOnInsulated * COLOUR_RATIO;
+
+/* Totals */
 
 calculatedPurePVCScrap =
-    calculatedPVCScrap * 0.97;
+    purgePVC +
+    insulatedPVC;
 
 calculatedColorPVCScrap =
-    calculatedPVCScrap * 0.03;
+    purgeColour +
+    insulatedColour;
 
-    calculatedWireScrap = Math.max(
-        0,
-        shine - insulated
-    );
+calculatedPVCScrap =
+    calculatedPurePVCScrap +
+    calculatedColorPVCScrap;
+
+/* Wire Scrap */
+
+calculatedWireScrap =
+    shine + insulated;
 
     let scrapPercent =
         pvcUsed > 0 ?
@@ -358,123 +397,82 @@ document.getElementById('colorPvcScrap').innerHTML =
         efficiency.toFixed(2) + ' %';
 }
 
-function downloadScrapSheet(){
+async function downloadScrapSheet() {
 
-    let date =
-        document.getElementById("scrapDate").value;
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Scrap Sheet");
 
-    let time =
-        document.getElementById("scrapTime").value;
+    let date = document.getElementById("scrapDate").value;
+    let time = document.getElementById("scrapTime").value;
+    let mfp = document.getElementById("mfpNumber").value;
+    let pvcCode = document.getElementById("pvcCode").value;
+    let colorPvcCode = document.getElementById("colorPvcCode").value;
+    let wireCode = document.getElementById("wireCode").value;
 
-    let mfp =
-        document.getElementById("mfpNumber").value.trim();
-
-    let pvcCode =
-        document.getElementById("pvcCode").value.trim();
-
-    let colorPvcCode =
-        document.getElementById("colorPvcCode").value.trim();
-
-    let wireCode =
-        document.getElementById("wireCode").value.trim();
-
-    if(!date){
-        alert("Please select a date");
-        return;
-    }
-
-    if(!time){
-        alert("Please select a time");
-        return;
-    }
-
-    if(!mfp){
-        alert("Please enter MFP Number");
-        return;
-    }
-
-    if(!pvcCode){
-        alert("Please enter PVC Stock Code");
-        return;
-    }
-
-    if(!colorPvcCode){
-        alert("Please enter Colour PVC Stock Code");
-        return;
-    }
-
-    if(!wireCode){
-        alert("Please enter Wire Stock Code");
-        return;
-    }
-
-    const rows = [
-
-        [
-            "DATE",
-            "TIME",
-            "MACHINE",
-            "MFP",
-            "STOCK CODE",
-            "QTY"
-        ],
-
-        [
-            date,
-            time,
-            "M70 Extrusion Machine",
-            mfp,
-            pvcCode,
-            calculatedPurePVCScrap.toFixed(3)
-        ],
-
-        [
-            date,
-            time,
-            "M70 Extrusion Machine",
-            mfp,
-            colorPvcCode,
-            calculatedColorPVCScrap.toFixed(3)
-        ],
-
-        [
-            date,
-            time,
-            "M70 Extrusion Machine",
-            mfp,
-            wireCode,
-            calculatedWireScrap.toFixed(3)
-        ]
-
+    worksheet.columns = [
+        { header: "DATE", key: "date", width: 15 },
+        { header: "TIME", key: "time", width: 12 },
+        { header: "MACHINE", key: "machine", width: 30 },
+        { header: "MFP", key: "mfp", width: 20 },
+        { header: "STOCK CODE", key: "stock", width: 20 },
+        { header: "QTY", key: "qty", width: 15 }
     ];
 
-    let csvContent =
-    rows.map(row => row.join(","))
-        .join("\r\n");
+    worksheet.addRow({
+        date: date,
+        time: time,
+        machine: "M70 Extrusion Machine",
+        mfp: mfp,
+        stock: pvcCode,
+        qty: calculatedPurePVCScrap.toFixed(3)
+    });
 
-    let blob = new Blob(
-    ["\uFEFF" + csvContent],
-    {
-        type:"text/csv;charset=utf-8;"
-    }
-);
+    worksheet.addRow({
+        date: date,
+        time: time,
+        machine: "M70 Extrusion Machine",
+        mfp: mfp,
+        stock: colorPvcCode,
+        qty: calculatedColorPVCScrap.toFixed(3)
+    });
 
-    let link =
-        document.createElement("a");
+    worksheet.addRow({
+        date: date,
+        time: time,
+        machine: "M70 Extrusion Machine",
+        mfp: mfp,
+        stock: wireCode,
+        qty: calculatedWireScrap.toFixed(3)
+    });
 
-    link.href =
-        URL.createObjectURL(blob);
+    worksheet.eachRow(row => {
+        row.eachCell(cell => {
+            cell.border = {
+                top: { style: "thin" },
+                left: { style: "thin" },
+                bottom: { style: "thin" },
+                right: { style: "thin" }
+            };
+        });
+    });
+
+    const buffer = await workbook.xlsx.writeBuffer();
+
+    const blob = new Blob(
+        [buffer],
+        {
+            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        }
+    );
+
+    const link = document.createElement("a");
+
+    link.href = URL.createObjectURL(blob);
 
     link.download =
-        "M70_Scrap_Sheet_" +
-        date +
-        ".csv";
-
-    document.body.appendChild(link);
+        `M70_Scrap_Sheet_${date}.xlsx`;
 
     link.click();
-
-    document.body.removeChild(link);
 }
 
 </script>
