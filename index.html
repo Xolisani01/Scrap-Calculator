@@ -123,11 +123,7 @@ button:hover{
 <div class="container">
 
 <h1>WIRE EXTRUSION SCRAP CALCULATOR</h1>
-<center>
-    <img src="https://sealtron.co.za/wp-content/uploads/2024/07/Background-8.png"
-     height="80"
-     width="100">
-</center>
+
 <div class="info-box">
 <strong>Process Constant:</strong><br>
 25 kg PVC + 0.75 kg Colour = 5000 m Extruded Wire
@@ -266,9 +262,6 @@ Material Conversion Efficiency
 
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
-<script>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
 
 <script>
 
@@ -279,101 +272,116 @@ let calculatedWireScrap = 0;
 
 function calculateScrap(){
 
-    let length = parseFloat(document.getElementById('length').value) || 0;
-    let pvcLoaded = parseFloat(document.getElementById('pvcLoaded').value) || 0;
-    let pvcRemaining = parseFloat(document.getElementById('pvcRemaining').value) || 0;
-    let plurgePVC = parseFloat(document.getElementById('plurgePVC').value) || 0;
-    let shine = parseFloat(document.getElementById('shine').value) || 0;
-    let insulated = parseFloat(document.getElementById('insulated').value) || 0;
+    let length =
+        parseFloat(document.getElementById('length').value) || 0;
+
+    let pvcLoaded =
+        parseFloat(document.getElementById('pvcLoaded').value) || 0;
+
+    let pvcRemaining =
+        parseFloat(document.getElementById('pvcRemaining').value) || 0;
+
+    let plurgePVC =
+        parseFloat(document.getElementById('plurgePVC').value) || 0;
+
+    let shine =
+        parseFloat(document.getElementById('shine').value) || 0;
+
+    let insulated =
+        parseFloat(document.getElementById('insulated').value) || 0;
 
     let pvcUsed = pvcLoaded - pvcRemaining;
 
-    if(pvcUsed < 0){
+    if (pvcUsed < 0) {
         alert("Remaining PVC cannot be greater than Loaded PVC");
         return;
     }
 
+    /* Production constants */
+
     const pvcPerMeter = 25 / 5000;
     const colourPerMeter = 0.75 / 5000;
 
-    let expectedPVC = length * pvcPerMeter;
-    let expectedColour = length * colourPerMeter;
+    let expectedPVC =
+        length * pvcPerMeter;
 
-   /* Material Ratios */
+    let expectedColour =
+        length * colourPerMeter;
 
-const PVC_RATIO = 25 / 25.75;
-const COLOUR_RATIO = 0.75 / 25.75;
+    /* Compound ratios */
 
-/* Purge Scrap */
+    const PVC_RATIO =
+        25 / 25.75;
 
-let purgePVC =
-    plurgePVC * PVC_RATIO;
+    const COLOUR_RATIO =
+        0.75 / 25.75;
 
-let purgeColour =
-    plurgePVC * COLOUR_RATIO;
+    /*
+    5000m contains:
 
-/* Material ratios */
+    25.75kg compound
+    40kg conductor
 
-const PVC_RATIO = 25 / 25.75;
-const COLOUR_RATIO = 0.75 / 25.75;
+    Compound fraction of insulated wire
+    */
 
-/*
-5000m contains:
-40kg shine wire
-25.75kg PVC compound
+    const COMPOUND_RATIO =
+        25.75 / (25.75 + 40);
 
-Compound fraction of insulated wire
-*/
+    const WIRE_RATIO =
+        40 / (25.75 + 40);
 
-const COMPOUND_RATIO =
-    25.75 / (25.75 + 40);
+    /* Purge scrap */
 
-/* PVC compound contained in insulated scrap */
+    let purgePVC =
+        plurgePVC * PVC_RATIO;
 
-let compoundOnInsulated =
-    insulated * COMPOUND_RATIO;
+    let purgeColour =
+        plurgePVC * COLOUR_RATIO;
 
-/* Split compound into PVC and colour PVC */
+    /* Insulated scrap analysis */
 
-let insulatedPVC =
-    compoundOnInsulated * PVC_RATIO;
+    let compoundOnInsulated =
+        insulated * COMPOUND_RATIO;
 
-let insulatedColour =
-    compoundOnInsulated * COLOUR_RATIO;
+    let wireInsideInsulated =
+        insulated * WIRE_RATIO;
 
-/* Totals */
+    let insulatedPVC =
+        compoundOnInsulated * PVC_RATIO;
 
-calculatedPurePVCScrap =
-    purgePVC +
-    insulatedPVC;
+    let insulatedColour =
+        compoundOnInsulated * COLOUR_RATIO;
 
-calculatedColorPVCScrap =
-    purgeColour +
-    insulatedColour;
+    /* Totals */
 
-calculatedPVCScrap =
-    calculatedPurePVCScrap +
-    calculatedColorPVCScrap;
+    calculatedPurePVCScrap =
+        purgePVC + insulatedPVC;
 
-/* Wire Scrap */
+    calculatedColorPVCScrap =
+        purgeColour + insulatedColour;
 
-calculatedWireScrap =
-    shine + insulated;
+    calculatedPVCScrap =
+        calculatedPurePVCScrap +
+        calculatedColorPVCScrap;
+
+    calculatedWireScrap =
+        shine + wireInsideInsulated;
 
     let scrapPercent =
-        pvcUsed > 0 ?
-        (calculatedPVCScrap / pvcUsed) * 100 :
-        0;
+        pvcUsed > 0
+            ? (calculatedPVCScrap / pvcUsed) * 100
+            : 0;
 
     let yieldPercent =
-        pvcUsed > 0 ?
-        (expectedPVC / pvcUsed) * 100 :
-        0;
+        pvcUsed > 0
+            ? (expectedPVC / pvcUsed) * 100
+            : 0;
 
     let efficiency =
-        shine > 0 ?
-        (insulated / shine) * 100 :
-        0;
+        pvcUsed > 0
+            ? ((pvcUsed - calculatedPVCScrap) / pvcUsed) * 100
+            : 0;
 
     document.getElementById('results').style.display = 'block';
 
@@ -393,10 +401,10 @@ calculatedWireScrap =
         calculatedPVCScrap.toFixed(3) + ' kg';
 
     document.getElementById('purePvcScrap').innerHTML =
-    calculatedPurePVCScrap.toFixed(3) + ' kg';
+        calculatedPurePVCScrap.toFixed(3) + ' kg';
 
-document.getElementById('colorPvcScrap').innerHTML =
-    calculatedColorPVCScrap.toFixed(3) + ' kg';
+    document.getElementById('colorPvcScrap').innerHTML =
+        calculatedColorPVCScrap.toFixed(3) + ' kg';
 
     document.getElementById('wireScrap').innerHTML =
         calculatedWireScrap.toFixed(3) + ' kg';
