@@ -126,7 +126,7 @@ button:hover{
 
 <div class="info-box">
 <strong>Process Constant:</strong><br>
-25 kg PVC + 0.75 kg Colour = 5000 m Extruded Wire
+19.4 kg PVC + 0.6 kg Colour = 5000 m Extruded Wire
 </div>
 
 <div class="form-grid">
@@ -167,12 +167,12 @@ button:hover{
 </div>
 
 <div class="input-group">
-<label>Shine Wire Weight (kg)</label>
+<label>Shine Wire Scrap Weight (kg)</label>
 <input type="number" id="shine">
 </div>
 
 <div class="input-group">
-<label>Insulated Wire Weight (kg)</label>
+<label>Insulated Scrap Weight (kg)</label>
 <input type="number" id="insulated">
 </div>
 
@@ -299,8 +299,8 @@ function calculateScrap(){
 
     /* Production constants */
 
-    const pvcPerMeter = 25 / 5000;
-    const colourPerMeter = 0.75 / 5000;
+    const pvcPerMeter = 19.4 / 5000;
+    const colourPerMeter = 0.6 / 5000;
 
     let expectedPVC =
         length * pvcPerMeter;
@@ -311,10 +311,10 @@ function calculateScrap(){
     /* Compound ratios */
 
     const PVC_RATIO =
-        25 / 25.75;
+        19.4 / 20;
 
     const COLOUR_RATIO =
-        0.75 / 25.75;
+        0.6 / 20;
 
     /*
     5000m contains:
@@ -326,10 +326,10 @@ function calculateScrap(){
     */
 
     const COMPOUND_RATIO =
-        25.75 / (25.75 + 40);
+        0.004 / 0.012;
 
-    const WIRE_RATIO =
-        40 / (25.75 + 40);
+const WIRE_RATIO =
+        0.008 / 0.012;
 
     /* Purge scrap */
 
