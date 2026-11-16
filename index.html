@@ -468,7 +468,23 @@ async function downloadScrapSheet() {
     { header: "QTY (KG)", key: "qty", width: 15 },
     { header: "SCRAP %", key: "scrap", width: 15 }
 ];
+worksheet.getRow(1).eachCell(cell => {
+    cell.font = {
+        bold: true,
+        color: { argb: "000000" }
+    };
 
+    cell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "D9D9D9" }
+    };
+
+    cell.alignment = {
+        horizontal: "center",
+        vertical: "middle"
+    };
+});
     worksheet.addRow({
     date: date,
     time: time,
