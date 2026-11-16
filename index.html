@@ -249,11 +249,6 @@ Scrap Percentage
 </div>
 
 <div class="card">
-Yield Percentage
-<div class="value" id="yieldPercent"></div>
-</div>
-
-<div class="card">
 Material Conversion Efficiency
 <div class="value" id="efficiency"></div>
 </div>
@@ -261,7 +256,9 @@ Material Conversion Efficiency
 </div>
 
 </div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+<script 
+    src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js">
+</script>
 
 <script>
 
@@ -269,6 +266,15 @@ let calculatedPVCScrap = 0;
 let calculatedPurePVCScrap = 0;
 let calculatedColorPVCScrap = 0;
 let calculatedWireScrap = 0;
+
+let calculatedPVCScrapPercent = 0;
+let calculatedColorPVCScrapPercent = 0;
+let calculatedWireScrapPercent = 0;
+
+let calculatedTotalScrapPercent = 0;
+let calculatedEfficiency = 0;
+
+let calculationPerformed = false;
 
 function calculateScrap(){
 
@@ -296,17 +302,20 @@ function calculateScrap(){
         alert("Remaining PVC cannot be greater than Loaded PVC");
         return;
     }
-
+   calculationPerformed = true;
     /* Production constants */
 
     const pvcPerMeter = 19.4 / 5000;
     const colourPerMeter = 0.6 / 5000;
-
+    const wirePerMeter = 40 / 5000;
     let expectedPVC =
         length * pvcPerMeter;
 
     let expectedColour =
         length * colourPerMeter;
+    
+    let expectedWire =
+    length * wirePerMeter;
 
     /* Compound ratios */
 
@@ -319,7 +328,7 @@ function calculateScrap(){
     /*
     5000m contains:
 
-    25.75kg compound
+    20kg compound
     40kg conductor
 
     Compound fraction of insulated wire
@@ -369,20 +378,39 @@ const WIRE_RATIO =
         shine + wireInsideInsulated;
 
     let scrapPercent =
-        pvcUsed > 0
-            ? (calculatedPVCScrap / pvcUsed) * 100
-            : 0;
+    pvcUsed > 0
+        ? (calculatedPVCScrap / pvcUsed) * 100
+        : 0;
 
-    let yieldPercent =
-        pvcUsed > 0
-            ? (expectedPVC / pvcUsed) * 100
-            : 0;
+let efficiency =
+    pvcUsed > 0
+        ? ((pvcUsed - calculatedPVCScrap) / pvcUsed) * 100
+        : 0;
 
-    let efficiency =
-        pvcUsed > 0
-            ? ((pvcUsed - calculatedPVCScrap) / pvcUsed) * 100
-            : 0;
+/* Material percentages */
 
+calculatedPVCScrapPercent =
+expectedPVC > 0
+? (calculatedPurePVCScrap / expectedPVC) * 100
+: 0;
+
+calculatedColorPVCScrapPercent =
+    expectedColour > 0
+        ? (calculatedColorPVCScrap / expectedColour) * 100
+        : 0;
+
+calculatedWireScrapPercent =
+    expectedWire > 0
+        ? (calculatedWireScrap / expectedWire) * 100
+        : 0;
+
+calculatedTotalScrapPercent =
+    scrapPercent;
+
+calculatedEfficiency =
+    efficiency;
+
+calculationPerformed = true;
     document.getElementById('results').style.display = 'block';
 
     document.getElementById('pvcUsedResult').innerHTML =
@@ -412,19 +440,12 @@ const WIRE_RATIO =
     document.getElementById('scrapPercent').innerHTML =
         scrapPercent.toFixed(2) + ' %';
 
-    document.getElementById('yieldPercent').innerHTML =
-        yieldPercent.toFixed(2) + ' %';
-
     document.getElementById('efficiency').innerHTML =
         efficiency.toFixed(2) + ' %';
 }
 
 async function downloadScrapSheet() {
-    if (
-    calculatedPurePVCScrap === 0 &&
-    calculatedColorPVCScrap === 0 &&
-    calculatedWireScrap === 0
-) {
+    if (!calculationPerformed) {
     alert("Please click Calculate Scrap first.");
     return;
 }
@@ -439,41 +460,59 @@ async function downloadScrapSheet() {
     let wireCode = document.getElementById("wireCode").value;
 
     worksheet.columns = [
-        { header: "DATE", key: "date", width: 15 },
-        { header: "TIME", key: "time", width: 12 },
-        { header: "MACHINE", key: "machine", width: 30 },
-        { header: "MFP", key: "mfp", width: 20 },
-        { header: "STOCK CODE", key: "stock", width: 20 },
-        { header: "QTY", key: "qty", width: 15 }
-    ];
+    { header: "DATE", key: "date", width: 15 },
+    { header: "TIME", key: "time", width: 12 },
+    { header: "MACHINE", key: "machine", width: 30 },
+    { header: "MFP", key: "mfp", width: 20 },
+    { header: "STOCK CODE", key: "stock", width: 20 },
+    { header: "QTY (KG)", key: "qty", width: 15 },
+    { header: "SCRAP %", key: "scrap", width: 15 }
+];
 
     worksheet.addRow({
-        date: date,
-        time: time,
-        machine: "M70 Extrusion Machine",
-        mfp: mfp,
-        stock: pvcCode,
-        qty: calculatedPurePVCScrap.toFixed(3)
-    });
+    date: date,
+    time: time,
+    machine: "M70 Extrusion Machine",
+    mfp: mfp,
+    stock: pvcCode,
+    qty: calculatedPurePVCScrap.toFixed(3),
+    scrap: calculatedPVCScrapPercent.toFixed(2) + "%"
+});
 
     worksheet.addRow({
-        date: date,
-        time: time,
-        machine: "M70 Extrusion Machine",
-        mfp: mfp,
-        stock: colorPvcCode,
-        qty: calculatedColorPVCScrap.toFixed(3)
-    });
+    date: date,
+    time: time,
+    machine: "M70 Extrusion Machine",
+    mfp: mfp,
+    stock: colorPvcCode,
+    qty: calculatedColorPVCScrap.toFixed(3),
+    scrap: calculatedColorPVCScrapPercent.toFixed(2) + "%"
+});
 
     worksheet.addRow({
-        date: date,
-        time: time,
-        machine: "M70 Extrusion Machine",
-        mfp: mfp,
-        stock: wireCode,
-        qty: calculatedWireScrap.toFixed(3)
-    });
+    date: date,
+    time: time,
+    machine: "M70 Extrusion Machine",
+    mfp: mfp,
+    stock: wireCode,
+    qty: calculatedWireScrap.toFixed(3),
+    scrap: calculatedWireScrapPercent.toFixed(2) + "%"
+});
+worksheet.addRow([]);
+worksheet.addRow([]);
 
+const r1 = worksheet.addRow({
+    stock: "Material Conversion Efficiency",
+    scrap: calculatedEfficiency.toFixed(2) + "%"
+});
+
+const r2 = worksheet.addRow({
+    stock: "Total Scrap Percentage",
+    scrap: calculatedTotalScrapPercent.toFixed(2) + "%"
+});
+
+r1.font = { bold: true };
+r2.font = { bold: true };
     worksheet.eachRow(row => {
         row.eachCell(cell => {
             cell.border = {
